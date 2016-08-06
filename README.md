@@ -1,4 +1,4 @@
-# Login to portal.kit.ac.jp
+# Login to portal.student.kit.ac.jp
 
 This module can login to https://portal.student.kit.ac.jp/ and access any other pages limited access to students or 
 teacher of Kyoto Institute of Technology. 
