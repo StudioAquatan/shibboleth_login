@@ -28,11 +28,11 @@ Access other pages
 from login import ShibbolethClient
 
 client = ShibbolethClient('your username', 'your passsword')
-with client:
+with client() as client:
     res = client.get('URL which you want to access')
     print(type(res)) # => <class 'requests.models.Response'>
 ```
 Now, you can only use 'get' method in the 'with' statement. Any other method, for example 'post', is not implemented yet. 
-'get' method return 'requests.models.Response' object. So you simply use it as requests module. 
+'get' method return 'requests.models.Response' object. So you simply use it as requests module.   
 When you exit 'with' statement, ShibbolethClient class automatically execute 'close()' method. You don't need to execute 'close()' expressly. 
 
