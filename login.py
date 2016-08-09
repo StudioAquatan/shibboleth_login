@@ -12,7 +12,7 @@ class ShibbolethClient(object):
         self.url = 'https://portal.student.kit.ac.jp/'
 
     def __enter__(self):
-        self.get()
+        return self.get
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
