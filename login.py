@@ -34,9 +34,9 @@ class ShibbolethClient(object):
     def get(self, url=None):
         # redirect to authentication page
         if url:
-            login_page = self.session.get(url)
+            login_page = self.session.get(url, timeout=20)
         else:
-            login_page = self.session.get(self.url)
+            login_page = self.session.get(self.url, timeout=20)
 
         if 'auth.cis.kit.ac.jp' not in login_page.url:
             return login_page
