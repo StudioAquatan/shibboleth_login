@@ -1,1 +1,1 @@
-from login import ShibbolethClient
+from .login import ShibbolethClient
