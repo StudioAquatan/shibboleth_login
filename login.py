@@ -6,10 +6,10 @@ class ShibbolethClient(object):
 
     session = requests.session()
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, login_url=None, *args, **kwards):
         self.username = username
         self.password = password
-        self.url = 'https://portal.student.kit.ac.jp/'
+        self.url = login_url if login_url else 'https://portal.student.kit.ac.jp/'
 
     def __enter__(self):
         self.get()
