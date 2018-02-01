@@ -3,55 +3,68 @@ from bs4 import BeautifulSoup
 
 
 class ShibbolethClient(object):
+    """
+    A wrapper for requests in order to through Shibboleth Authentication
+    """
 
-    session = requests.session()
+    PARSER = 'lxml'  # type: str
+    SHIBBOLETH_AUTH_DOMAIN = 'auth.cis.kit.ac.jp'  # type: str
+    SHIBBOLETH_USERNAME_KEY = 'j_username'  # type: str
+    SHIBBOLETH_PASSWORD_KEY = 'j_password'  # type: str
+    SHIBBOLETH_OPTION_DATA = {"_eventId_proceed": ""}  # type: dict
 
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str):
+        self.session = requests.session()
         self.username = username
         self.password = password
-        self.url = 'https://portal.student.kit.ac.jp/'
 
     def __enter__(self):
-        self.get()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
 
-    @staticmethod
-    def parse_saml_data(html):
-        soup = BeautifulSoup(html, "lxml")
+    def __parse_saml_data(self, html):
+        soup = BeautifulSoup(html, self.PARSER)
         form = soup.find('form')
-        action = form.get('action')
+        action = form.get('action') 
         input_form = form.div.find_all('input')
-        relay_state = input_form[0].get('value')
-        saml_response = input_form[1].get('value')
         saml_data = {
-            'RelayState': relay_state,
-            'SAMLResponse': saml_response
+            'RelayState': input_form[0].get('value'),
+            'SAMLResponse': input_form[1].get('value')
         }
         return {'action': action, 'saml_data': saml_data}
 
-    def get(self, url=None):
+    def get(self, url: str, *args, **kwards) -> requests.models.Response:
+        """
+        Get page from specified url through Shibboleth authentication.
+        :param url:get url
+        :param args:option args for `requests.get()`
+        ;param kwards:option args for `requests.get()`
+        """
         # redirect to authentication page
-        if url:
-            login_page = self.session.get(url, timeout=20)
-        else:
-            login_page = self.session.get(self.url, timeout=20)
+        login_page = self.session.get(url, *args, **kwards)
 
-        if 'auth.cis.kit.ac.jp' not in login_page.url:
+        if self.SHIBBOLETH_AUTH_DOMAIN not in login_page.url:
             return login_page
 
         # post data
         auth_data = {
-            "j_username": self.username,
-            "j_password": self.password,
-            "_eventId_proceed": ""
+            self.SHIBBOLETH_USERNAME_KEY: self.username,
+            self.SHIBBOLETH_PASSWORD_KEY: self.password,
+            **self.SHIBBOLETH_OPTION_DATA
         }
         auth_res = self.session.post(login_page.url, data=auth_data)
 
         # parse response
-        res = self.parse_saml_data(auth_res.text)
+        res = self.__parse_saml_data(auth_res.text)
 
         # Request Assertion Consumer Service
         # Redirect to target resource, and respond with target resource.
         return self.session.post(res['action'], res['saml_data'])
+
+    def close() -> None:
+        """
+        Close requests.session
+        """
+        self.session.close()
