@@ -3,16 +3,17 @@ from bs4 import BeautifulSoup
 
 
 class ShibbolethClient(object):
+    """
+    A wrapper for requests in order to through Shibboleth Authentication
+    """
 
-    PARSER = 'lxml'
-    SHIBBOLETH_AUTH_DOMAIN = 'auth.cis.kit.ac.jp'
-    SHIBBOLETH_USERNAME_KEY = 'j_username'
-    SHIBBOLETH_PASSWORD_KEY = 'j_password'
-    SHIBBOLETH_OPTION_DATA = {
-        "_eventId_proceed": ""
-    }
+    PARSER = 'lxml'  # type: str
+    SHIBBOLETH_AUTH_DOMAIN = 'auth.cis.kit.ac.jp'  # type: str
+    SHIBBOLETH_USERNAME_KEY = 'j_username'  # type: str
+    SHIBBOLETH_PASSWORD_KEY = 'j_password'  # type: str
+    SHIBBOLETH_OPTION_DATA = {"_eventId_proceed": ""}  # type: dict
 
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str):
         self.session = requests.session()
         self.username = username
         self.password = password
@@ -34,7 +35,13 @@ class ShibbolethClient(object):
         }
         return {'action': action, 'saml_data': saml_data}
 
-    def get(self, url, *args, **kwards):
+    def get(self, url: str, *args, **kwards) -> requests.models.Response:
+        """
+        Get page from specified url through Shibboleth authentication.
+        :param url:get url
+        :param args:option args for `requests.get()`
+        ;param kwards:option args for `requests.get()`
+        """
         # redirect to authentication page
         login_page = self.session.get(url, *args, **kwards)
 
