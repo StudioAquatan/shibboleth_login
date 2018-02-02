@@ -63,7 +63,7 @@ class ShibbolethClient(object):
         # Redirect to target resource, and respond with target resource.
         return self.session.post(res['action'], res['saml_data'])
 
-    def close() -> None:
+    def close(self) -> None:
         """
         Close requests.session
         """
