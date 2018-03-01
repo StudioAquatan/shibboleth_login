@@ -47,15 +47,14 @@ class ShibbolethClient(object):
             return True
         return False
 
-    def get(self, url: str, *args, **kwards) -> requests.models.Response:
+    def get(self, url: str, **kwards) -> requests.models.Response:
         """
         Get page from specified url through Shibboleth authentication.
         :param url:get url
-        :param args:option args for `requests.get()`
         :param kwards:option args for `requests.get()`
         """
         # redirect to authentication page
-        login_page = self.session.get(url, *args, **kwards)
+        login_page = self.session.get(url, **kwards)
 
         if self.SHIBBOLETH_AUTH_DOMAIN not in login_page.url:
             return login_page
