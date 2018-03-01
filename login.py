@@ -33,12 +33,11 @@ class ShibbolethClient(object):
         soup = BeautifulSoup(html, self.PARSER)
         form = soup.find('form')
         action = form.get('action')
-        input_form = form.div.find_all('input')
         saml_data = {
-            'RelayState': input_form[0].get('value'),
-            'SAMLResponse': input_form[1].get('value')
+            'RelayState': form.select('input[name="RelayState"]')[0].get('value'),
+            'SAMLResponse': form.select('input[name="SAMLResponse"]')[0].get('value')
         }
-        return {'action': action, 'saml_data': saml_data}
+        return action, saml_data
 
     def __is_continue_required(self, html):
         soup = BeautifulSoup(html, self.PARSER)
@@ -74,11 +73,11 @@ class ShibbolethClient(object):
         auth_res = self.session.post(login_page.url, data=auth_data)
 
         # parse response
-        res = self.__parse_saml_data(auth_res.text)
+        action_url, saml_data = self.__parse_saml_data(auth_res.text)
 
         # Request Assertion Consumer Service
         # Redirect to target resource, and respond with target resource.
-        return self.session.post(res['action'], res['saml_data'])
+        return self.session.post(action_url, saml_data)
 
     def close(self) -> None:
         """
