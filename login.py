@@ -19,6 +19,11 @@ class ShibbolethClient(object):
     }  # type: dict
 
     def __init__(self, username: str, password: str):
+        """
+        Setting up instance
+        :param username:student id. for example 'b0000000'
+        :param password:password for above user
+        """
         self.session = requests.session()
         self.username = username
         self.password = password
