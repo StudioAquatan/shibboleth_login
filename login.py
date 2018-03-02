@@ -2,6 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 
 
+class ShibbolethAuthError(Exception):
+    pass
+
+
+class SAMLResponseParseError(Exception):
+    pass
+
+
 class ShibbolethClient(object):
     """
     A wrapper for requests in order to through Shibboleth Authentication
@@ -36,12 +44,18 @@ class ShibbolethClient(object):
 
     def __parse_saml_data(self, html):
         soup = BeautifulSoup(html, self.PARSER)
-        form = soup.find('form')
-        action = form.get('action')
-        saml_data = {
-            'RelayState': form.select('input[name="RelayState"]')[0].get('value'),
-            'SAMLResponse': form.select('input[name="SAMLResponse"]')[0].get('value')
-        }
+        form_error = soup.select('p.form-error')
+        if len(form_error) != 0:
+            raise ShibbolethAuthError(form_error[0].get_text())
+        try:
+            form = soup.find('form')
+            action = form.get('action')
+            saml_data = {
+                'RelayState': form.select('input[name="RelayState"]')[0].get('value'),
+                'SAMLResponse': form.select('input[name="SAMLResponse"]')[0].get('value')
+            }
+        except Exception:
+            raise SAMLResponseParseError('Could not parse response.')
         return action, saml_data
 
     def __is_continue_required(self, html):
