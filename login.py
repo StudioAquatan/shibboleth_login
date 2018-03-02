@@ -42,7 +42,7 @@ class ShibbolethClient(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
 
-    def __parse_saml_data(self, html):
+    def _parse_saml_data(self, html):
         soup = BeautifulSoup(html, self.PARSER)
         form_error = soup.select('p.form-error')
         if len(form_error) != 0:
@@ -58,7 +58,7 @@ class ShibbolethClient(object):
             raise SAMLResponseParseError('Could not parse response.')
         return action, saml_data
 
-    def __is_continue_required(self, html):
+    def _is_continue_required(self, html):
         soup = BeautifulSoup(html, self.PARSER)
         form = soup.find('form')
         submit = form.select('input[type="submit"]')[0]
