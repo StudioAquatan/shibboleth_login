@@ -97,7 +97,7 @@ class ShibbolethClient(object):
 
         # Request Assertion Consumer Service
         # Redirect to target resource, and respond with target resource.
-        return self.session.post(action_url, saml_data)
+        return self.session.post(action_url, data=saml_data)
 
     def close(self) -> None:
         """
