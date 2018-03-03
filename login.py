@@ -2,6 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 
 
+class ShibbolethAuthError(Exception):
+    pass
+
+
+class SAMLResponseParseError(Exception):
+    pass
+
+
 class ShibbolethClient(object):
     """
     A wrapper for requests in order to through Shibboleth Authentication
@@ -34,21 +42,28 @@ class ShibbolethClient(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
 
-    def __parse_saml_data(self, html):
+    def _parse_saml_data(self, html):
         soup = BeautifulSoup(html, self.PARSER)
-        form = soup.find('form')
-        action = form.get('action')
-        saml_data = {
-            'RelayState': form.select('input[name="RelayState"]')[0].get('value'),
-            'SAMLResponse': form.select('input[name="SAMLResponse"]')[0].get('value')
-        }
+        form_error = soup.select('p.form-error')
+        if len(form_error) != 0:
+            raise ShibbolethAuthError(form_error[0].get_text())
+        try:
+            form = soup.find('form')
+            action = form.get('action')
+            saml_data = {
+                'RelayState': form.select('input[name="RelayState"]')[0].get('value'),
+                'SAMLResponse': form.select('input[name="SAMLResponse"]')[0].get('value')
+            }
+        except Exception:
+            raise SAMLResponseParseError('Could not parse response.')
         return action, saml_data
 
-    def __is_continue_required(self, html):
+    def _is_continue_required(self, html):
         soup = BeautifulSoup(html, self.PARSER)
         form = soup.find('form')
-        submit = form.select('input[type="submit"]')[0]
-        if submit.get('value') == 'Continue':
+        username = form.select('input[id="username"]')
+        password = form.select('input[id="password"]')
+        if len(username) == 0 and len(password) == 0:
             return True
         return False
 
@@ -65,7 +80,8 @@ class ShibbolethClient(object):
             return login_page
 
         # skip webstorage confirmation
-        if self.__is_continue_required(login_page.text):
+        if self._is_continue_required(login_page.text):
+            # TODO: パラメータ決め打ちなのでどうにかしたい
             login_page = self.session.post(login_page.url, data=self.SHIBBOLETH_PASS_WEBSTORAGE_CONF_PARAMS)
 
         # post data
@@ -77,11 +93,11 @@ class ShibbolethClient(object):
         auth_res = self.session.post(login_page.url, data=auth_data)
 
         # parse response
-        action_url, saml_data = self.__parse_saml_data(auth_res.text)
+        action_url, saml_data = self._parse_saml_data(auth_res.text)
 
         # Request Assertion Consumer Service
         # Redirect to target resource, and respond with target resource.
-        return self.session.post(action_url, saml_data)
+        return self.session.post(action_url, data=saml_data)
 
     def close(self) -> None:
         """
