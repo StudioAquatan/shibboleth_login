@@ -61,8 +61,9 @@ class ShibbolethClient(object):
     def _is_continue_required(self, html):
         soup = BeautifulSoup(html, self.PARSER)
         form = soup.find('form')
-        submit = form.select('input[type="submit"]')[0]
-        if submit.get('value') == 'Continue':
+        username = form.select('input[id="username"]')
+        password = form.select('input[id="password"]')
+        if len(username) == 0 and len(password) == 0:
             return True
         return False
 
@@ -79,7 +80,8 @@ class ShibbolethClient(object):
             return login_page
 
         # skip webstorage confirmation
-        if self.__is_continue_required(login_page.text):
+        if self._is_continue_required(login_page.text):
+            # TODO: パラメータ決め打ちなのでどうにかしたい
             login_page = self.session.post(login_page.url, data=self.SHIBBOLETH_PASS_WEBSTORAGE_CONF_PARAMS)
 
         # post data
@@ -91,7 +93,7 @@ class ShibbolethClient(object):
         auth_res = self.session.post(login_page.url, data=auth_data)
 
         # parse response
-        action_url, saml_data = self.__parse_saml_data(auth_res.text)
+        action_url, saml_data = self._parse_saml_data(auth_res.text)
 
         # Request Assertion Consumer Service
         # Redirect to target resource, and respond with target resource.
