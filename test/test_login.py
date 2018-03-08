@@ -1,11 +1,17 @@
 import os
+import sys
 import unittest
 import contextlib
 import codecs
 import urllib.parse
 
 from unittest.mock import MagicMock, patch
+from pathlib import Path
 from nose.tools import eq_, ok_, raises
+
+module_path = Path(os.path.abspath(__file__)).parents[2]
+sys.path.append(module_path.as_posix())
+
 from shibboleth_login import ShibbolethClient, SAMLResponseParseError, ShibbolethAuthError
 
 
